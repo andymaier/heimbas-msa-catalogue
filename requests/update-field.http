@@ -1,0 +1,8 @@
+PATCH http://localhost:8080/articles/8469e67d-d5dc-4f29-b7a7-ac578c3155de
+Content-Type: application/json
+
+{
+    "name": "Currywurst"
+}
+
+###

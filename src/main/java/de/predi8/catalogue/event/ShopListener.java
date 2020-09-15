@@ -1,6 +1,8 @@
 package de.predi8.catalogue.event;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.predi8.catalogue.model.Article;
 import de.predi8.catalogue.repository.ArticleRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -17,8 +19,17 @@ public class ShopListener {
 		this.beanUtils = beanUtils;
 	}
 
-	//@KafkaListener(topics = "shop")
+	@KafkaListener(topics = "shop")
 	public void listen(Operation op) throws Exception {
 		System.out.println("op = " + op);
+
+		if(op.getBo().equals("article")) {
+			Article article = mapper.treeToValue(op.getObject(), Article.class);
+			if(op.getAction().equals("upsert")) {
+				repo.save(article );
+			} else if(op.getAction().equals("remove")) {
+				repo.delete(article);
+			}
+		}
 	}
 }
