@@ -41,7 +41,8 @@ public class CatalogueRestController {
 	private KafkaTemplate<String, Operation> kafka;
 	final private ObjectMapper mapper;
 
-	public CatalogueRestController(ArticleRepository repo, KafkaTemplate<String, Operation> kafka, ObjectMapper mapper) {
+	public CatalogueRestController(ArticleRepository repo, KafkaTemplate<String, Operation> kafka,
+			ObjectMapper mapper) {
 		this.repo = repo;
 		this.kafka = kafka;
 		this.mapper = mapper;
@@ -67,16 +68,39 @@ public class CatalogueRestController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Article> create(@RequestBody Article article, UriComponentsBuilder builder, HttpServletRequest request) {
+	public ResponseEntity<Article> create(@RequestBody Article article, UriComponentsBuilder builder,
+			HttpServletRequest request) {
 		String uuid = UUID.randomUUID().toString();
 		article.setUuid(uuid);
 
 		System.out.println("article = " + article);
 
-		//Article a = repo.save(article);
+		// Article a = repo.save(article);
 
 		Operation op = new Operation("article", "upsert", mapper.valueToTree(article));
-		kafka.send(new ProducerRecord<>("shop", op));
+
+		try {
+			kafka.send(new ProducerRecord<>("shop", op)).get(200, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TimeoutException e) {
+			System.out.println(article.getUuid());
+			e.printStackTrace();
+		}
+
+		try {
+			kafka.send(new ProducerRecord<>("shop", op)).get();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		return ResponseEntity.accepted().build();
 	}
